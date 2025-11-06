@@ -280,10 +280,10 @@ def main():
     controls = sidebar_controls(cat_cols, num_cols)
 
     # Routes
-    if controls[\"mode\"] == \"Single input\":
-        render_single_prediction(model, num_cols, cat_cols, controls[\"payload\"])
+    if controls["mode"] == "Single input":
+        render_single_prediction(model, num_cols, cat_cols, controls["payload"])
     else:
-        df = controls[\"payload\"]
+        df = controls["payload"]
         if df is not None:
             render_batch_predictions(model, num_cols, cat_cols, df)
         else:
@@ -295,5 +295,5 @@ def main():
     ''')
 
 
-if __name__ == \"__main__\":
+if __name__ == "__main__":
     main()
