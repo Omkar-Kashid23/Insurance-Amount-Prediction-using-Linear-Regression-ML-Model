@@ -1,10 +1,13 @@
 import streamlit as st
 import pickle
 import numpy as np
+import pandas as pd
 
 # --- Configuration ---
 # Ensure the model file is accessible in the same directory as this script.
 MODEL_PATH = 'best_model_for_insurance.pkl'
+# The R2 score (0.7202) is taken directly from the "Insurance project.ipynb" file.
+R2_SCORE = 0.72 
 
 @st.cache_resource
 def load_model():
@@ -24,88 +27,145 @@ def load_model():
 lr_model = load_model()
 
 # --- Streamlit App Layout ---
-st.set_page_config(page_title="Insurance Charges Predictor", layout="centered")
+st.set_page_config(
+    page_title="Enhanced Insurance Charges Predictor", 
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
 
+# Custom CSS for aesthetics
 st.markdown("""
     <style>
     .big-font {
-        font-size:30px !important;
+        font-size:32px !important;
         font-weight: bold;
-        color: #3b5998;
+        color: #007bff;
+        text-align: center;
+        margin-bottom: 20px;
     }
     .result-box {
-        padding: 20px;
-        border-radius: 10px;
-        border: 2px solid #00b300;
-        background-color: #e6ffe6;
+        padding: 25px;
+        border-radius: 12px;
+        border: 3px solid #1a7d1a;
+        background-color: #e8f9e8;
         text-align: center;
-        margin-top: 20px;
+        margin-top: 25px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .stSlider > div > div > div:nth-child(2) {
+        background-color: #007bff; /* Slider track color */
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<p class="big-font">🏥 US Medical Insurance Charges Predictor</p>', unsafe_allow_html=True)
-st.write("---")
+st.markdown('<p class="big-font">💰 Insurance Charges Calculator (LR Model)</p>', unsafe_allow_html=True)
+
+
+# --- SIDEBAR: Model Insights ---
+with st.sidebar:
+    st.title("Model Insights")
+    st.subheader("Linear Regression Details")
+    
+    if lr_model is not None and hasattr(lr_model, 'coef_') and hasattr(lr_model, 'intercept_'):
+        # Display Coefficients
+        # Features: age, bmi, smoker_yes (from the pickled model)
+        features = ['Age', 'BMI', 'Smoker (Yes)']
+        coefficients = lr_model.coef_
+        coef_df = pd.DataFrame({
+            'Feature': features,
+            'Coefficient (Increase in Charges)': coefficients.round(2)
+        })
+        st.dataframe(coef_df, hide_index=True)
+        
+        st.caption("These values indicate how much each feature (when increased by one unit) contributes to the total predicted charge.")
+        
+        st.markdown(f"**Intercept:** ${lr_model.intercept_:.2f}")
+        st.info(f"**Model R² Score (Test Data):** {R2_SCORE*100:.1f}%")
+
+        st.markdown("""
+            ---
+            **Interpretation:**
+            - **Smoker Status** has the largest impact, drastically increasing the predicted cost (Smoker is a binary feature (0 or 1), so the coefficient is the full cost increase).
+            - **Age** is the next major factor ($/year).
+            - **BMI** also positively correlates with charges ($/BMI unit).
+        """)
+    else:
+        st.warning("Model details cannot be displayed until the model file is successfully loaded.")
+
+
+# --- MAIN APP: User Inputs ---
+st.subheader("Customer Profile")
 
 if lr_model is not None:
-    # --- User Inputs ---
-    
-    # Input 1: Age
-    age = st.slider("1. Age", min_value=18, max_value=65, value=30, step=1)
-    
-    # Input 2: BMI
-    # Based on the notebook, BMI ranges were roughly 15.96 to 47.29 after cleaning
-    bmi = st.number_input("2. BMI (Body Mass Index)", min_value=15.0, max_value=55.0, value=25.0, step=0.1, format="%.2f")
-    
-    # Input 3: Smoker Status (One-Hot Encoded feature: smoker_yes)
-    smoker_status = st.radio(
-        "3. Smoker Status",
-        ('No', 'Yes'),
-        horizontal=True
-    )
-    
-    # Convert categorical/user-friendly input to model feature format
-    smoker_yes = 1 if smoker_status == 'Yes' else 0
-
-    # --- Prediction Logic ---
-    if st.button("Predict Charges 🔮", type="primary"):
-        # Prepare the input data array [age, bmi, smoker_yes]
-        # The model was trained on these three features, as confirmed by the pickle file.
-        input_data = np.array([[age, bmi, smoker_yes]])
+    with st.form("prediction_form"):
         
-        try:
-            # Make prediction
-            prediction = lr_model.predict(input_data)[0]
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            # Input 1: Age
+            age = st.slider("1. Age", min_value=18, max_value=65, value=30, step=1, 
+                            help="Enter the customer's age (18-65).")
+        
+        with col2:
+            # Input 2: BMI
+            # Based on the notebook, BMI ranges were roughly 15.96 to 47.29 after cleaning
+            bmi = st.number_input("2. BMI (Body Mass Index)", min_value=15.0, max_value=50.0, value=25.0, step=0.1, format="%.2f",
+                                  help="Enter BMI. Values > 30 are often classified as obese.")
             
-            # Format the prediction for display
-            # Ensure charges are not negative (though the LR model might predict it for edge cases)
-            predicted_charges = max(0, prediction)
-            formatted_charges = f"${predicted_charges:,.2f}"
+        # Input 3: Smoker Status
+        smoker_status = st.radio(
+            "3. Smoker Status",
+            ('No', 'Yes'),
+            horizontal=True,
+            key="smoker_radio"
+        )
+        
+        # Prediction Button
+        submitted = st.form_submit_button("Calculate Charges 🚀", type="primary")
+
+        # --- Prediction Logic ---
+        if submitted:
+            # Convert categorical/user-friendly input to model feature format
+            smoker_yes = 1 if smoker_status == 'Yes' else 0
+
+            # Prepare the input data array [age, bmi, smoker_yes]
+            input_data = np.array([[age, bmi, smoker_yes]])
             
-            # --- Display Results ---
-            st.markdown(
-                f"""
-                <div class="result-box">
-                    <p style="font-size:16px;">The Estimated Annual Insurance Charge is:</p>
-                    <p style="font-size:48px; font-weight:bolder; color:#00b300;">{formatted_charges}</p>
-                </div>
-                """, 
-                unsafe_allow_html=True
-            )
-            
-            # Insight based on Smoker status (since it's the strongest predictor)
-            if smoker_yes == 1:
-                st.info("⚠️ **Smoker Status Impact:** Smoking significantly increases the predicted charges. This feature has the largest coefficient in your linear model.")
-            else:
-                 st.info("✅ **Health Note:** Not being a smoker helps keep the estimated charges lower.")
+            try:
+                # Make prediction
+                prediction = lr_model.predict(input_data)[0]
+                
+                # Format the prediction for display
+                # Ensure charges are not negative (setting a minimum for safety)
+                predicted_charges = max(500, prediction) 
+                formatted_charges = f"${predicted_charges:,.2f}"
+                
+                # --- Display Results ---
+                st.markdown(
+                    f"""
+                    <div class="result-box">
+                        <p style="font-size:18px; font-weight:600;">The Estimated Annual Insurance Charge is:</p>
+                        <p style="font-size:56px; font-weight:bolder; color:#1a7d1a;">{formatted_charges}</p>
+                    </div>
+                    """, 
+                    unsafe_allow_html=True
+                )
+                
+                # Dynamic Insight based on risk factors
+                if smoker_yes == 1:
+                    st.warning("🚨 **Smoker Warning:** The predicted charge is significantly higher due to the customer's smoker status.")
+                elif bmi >= 30:
+                    st.warning("🟡 **Health Note:** A BMI of 30 or higher is contributing to increased charges.")
+                else:
+                    st.success("👍 **Prediction Insight:** The customer profile suggests relatively lower risk factors (non-smoker, healthy BMI).")
 
 
-        except Exception as e:
-            st.error(f"An error occurred during prediction: {e}")
+            except Exception as e:
+                st.error(f"An error occurred during prediction: {e}")
 
-# Provide instructions if the model is missing
+# If model load failed
 else:
-    st.warning("Please ensure the file 'best_model_for_insurance.pkl' is correctly uploaded for the application to function.")
+    st.error("Application cannot run without the model. Please check the sidebar for file loading details.")
 
 st.write("---")
-st.caption("Model based on Linear Regression using Age, BMI, and Smoker status.")
+st.caption("This prediction is based on a simple Linear Regression model using only Age, BMI, and Smoker status. For a more accurate quote, more features (like region, number of children, etc.) would be required.")
