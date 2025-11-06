@@ -102,17 +102,17 @@ if lr_model is not None:
         col1, col2 = st.columns(2)
         
         with col1:
-            # Input 1: Age
-            age = st.slider("1. Age", min_value=18, max_value=65, value=30, step=1, 
-                            help="Enter the customer's age (18-65).")
+            # Input 1: Age (Updated to number input)
+            age = st.number_input("1. Age", min_value=18, max_value=65, value=30, step=1, format="%d",
+                                  help="Enter the customer's age (18-65).")
         
         with col2:
             # Input 2: BMI
-            # Based on the notebook, BMI ranges were roughly 15.96 to 47.29 after cleaning
             bmi = st.number_input("2. BMI (Body Mass Index)", min_value=15.0, max_value=50.0, value=25.0, step=0.1, format="%.2f",
                                   help="Enter BMI. Values > 30 are often classified as obese.")
             
         # Input 3: Smoker Status
+        st.write("---")
         smoker_status = st.radio(
             "3. Smoker Status",
             ('No', 'Yes'),
@@ -169,3 +169,7 @@ else:
 
 st.write("---")
 st.caption("This prediction is based on a simple Linear Regression model using only Age, BMI, and Smoker status. For a more accurate quote, more features (like region, number of children, etc.) would be required.")
+st.divider()
+    st.caption('''
+    Built with ❤️ using Streamlit and scikit-learn. This dashboard emphasizes clarity, speed, and reproducibility.
+    ''')
