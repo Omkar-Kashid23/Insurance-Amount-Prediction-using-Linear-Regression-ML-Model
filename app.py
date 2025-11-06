@@ -269,7 +269,8 @@ def main():
         Use the sidebar to enter a single record or upload a CSV for batch scoring.
         This app auto-detects your model's expected features and handles preprocessing via your sklearn pipeline.
         ''')
-        st.caption(f\"Expected numeric: {num_cols}  •  categorical: {cat_cols}")
+        st.caption(f\"Expected numeric: `{num_cols}`  •  categorical: `{cat_cols}`")
+        # print("hi")
     with right:
         st.download_button("📄 Download sample CSV", data=sample_csv(num_cols, cat_cols),
                            file_name="sample_insurance_input.csv", mime="text/csv")
