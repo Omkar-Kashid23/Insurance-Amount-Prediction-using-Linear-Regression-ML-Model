@@ -36,8 +36,8 @@ def _safe_getattr(obj, name: str, default=None):
         return default
 
 def infer_feature_meta(model: BaseEstimator) -> Tuple[List[str], List[str]]:
-    \"\"\"Try to infer categorical & numeric feature names from a sklearn Pipeline or estimator.
-    Returns (numeric_features, categorical_features).\"\"\"
+    '''Try to infer categorical & numeric feature names from a sklearn Pipeline or estimator.
+    Returns (numeric_features, categorical_features).'''
     # Default heuristic for classic insurance dataset
     default_numeric = ["age", "bmi", "children"]
     default_categorical = ["sex", "smoker", "region"]
@@ -182,7 +182,7 @@ def kpis_section(preds: np.ndarray):
         st.metric("Std Dev (batch)" if len(preds) > 1 else "Std Dev", prettify_number(float(np.std(preds))))
 
 def explain_rules_row(row: Dict[str, Any]) -> List[str]:
-    \"\"\"Lightweight, human-readable rule-of-thumb explainer (no SHAP needed).\"\"\"
+    '''Lightweight, human-readable rule-of-thumb explainer (no SHAP needed).'''
     messages = []
     age = row.get("age", None)
     bmi = row.get("bmi", None)
@@ -264,11 +264,11 @@ def main():
     # Hero section
     left, right = st.columns([0.62, 0.38])
     with left:
-        st.markdown(\"\"\"
+        st.markdown('''
         ### 🚀 Ready to predict insurance charges
         Use the sidebar to enter a single record or upload a CSV for batch scoring.
         This app auto-detects your model's expected features and handles preprocessing via your sklearn pipeline.
-        \"\"\")
+        ''')
         st.caption(f\"Expected numeric: `{num_cols}`  •  categorical: `{cat_cols}`\")
     with right:
         st.download_button("📄 Download sample CSV", data=sample_csv(num_cols, cat_cols),
@@ -289,9 +289,9 @@ def main():
             st.warning("Upload a CSV to run batch predictions.")
 
     st.divider()
-    st.caption(\"\"\"
+    st.caption('''
     Built with ❤️ using Streamlit and scikit-learn. This dashboard emphasizes clarity, speed, and reproducibility.
-    \"\"\")
+    ''')
 
 
 if __name__ == \"__main__\":
