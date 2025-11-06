@@ -170,4 +170,4 @@ else:
 st.write("---")
 st.caption("This prediction is based on a simple Linear Regression model using only Age, BMI, and Smoker status. For a more accurate quote, more features (like region, number of children, etc.) would be required.")
 st.divider()
-st.caption(''' Built with ❤️ using Streamlit and scikit-learn. This dashboard emphasizes clarity, speed, and reproducibility. ''')
+st.caption(''' Built by Omkar Kashid using Streamlit and scikit-learn. This dashboard emphasizes clarity, speed, and reproducibility. ''')
